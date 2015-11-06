@@ -18,5 +18,5 @@ class Pi3dScanClient(DatagramProtocol):
         print "Datagram %s received from %s" % (repr(datagram), repr(address))
 
 
-reactor.listenUDP(5008, Pi3dScanClient())
+reactor.listenUDP(config.sender.PORT_LISTEN, Pi3dScanClient())
 reactor.run()
