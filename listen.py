@@ -12,21 +12,11 @@ import sys
 
 import config
 
-# --------------------------------------------------------
-# Config
-
-MCAST_GRP = '224.1.1.1'
-MCAST_PORT = 5007
-# NET_INTERFACE = 'eth0'
-NET_INTERFACE = 'wlan0'
-# options for the raspistill command
-RASPISTILL_OPTIONS_PATH = None
-PHOTOS_DIR = '/tmp/3dscan'
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-sock.bind(('', MCAST_PORT))
-mreq = struct.pack("4sl", socket.inet_aton(MCAST_GRP), socket.INADDR_ANY)
+sock.bind(('', config.MCAST_PORT))
+mreq = struct.pack("4sl", socket.inet_aton(config.MCAST_GRP), socket.INADDR_ANY)
 
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
@@ -38,17 +28,26 @@ def get_ip_address(ifname):
             struct.pack('256s', ifname[:15])
         )[20:24])
 
-id = get_ip_address(NET_INTERFACE)
+id = get_ip_address(config.listener.NET_INTERFACE)
 
 ip1, ip2, ip3, ip4 = id.split('.')
 
 print 'ID: ' + ip4
+if config.listener.MOCK_CAMERA:
+    print "MOCK_CAMERA is True! Only dummy image files will be generated"
+else:
+    print "raspistill optons: " + config.listener.RASPISTILL_OPTIONS
 
-raspistill_options = ''
-if RASPISTILL_OPTIONS_PATH is not None:
-    with open(RASPISTILL_OPTIONS_PATH) as optionfile:
-        raspistill_options = optionfile.readline()
-print "raspistill optons: " + raspistill_options
+def take_photo(dest, options):
+    cmd = 'raspistill -o %s %s' % (dest, options)
+    pid = subprocess.call(cmd, shell=True)
+
+def photo_path(dir, name, suffix):
+    """ Convert a photo name to a path
+        Eg. dir/name_suffix.jpg
+    """
+    filename = name + "_" + suffix + '.jpg'
+    return os.path.join(dir, filename)
 
 while True:
     data = sock.recv(10240)
@@ -59,16 +58,15 @@ while True:
         pid = subprocess.call(cmd, shell=True)
     else:
         name = data
-        print "shooting " + name
-        cmd = 'raspistill -o /tmp/photo.jpg ' + raspistill_options
-        pid = subprocess.call(cmd, shell=True)
-        photo_dir = PHOTOS_DIR + '/' + name
+        photo_dir = config.listener.PHOTOS_DIR + '/' + name
         try:
             os.makedirs(photo_dir)
-        except os.error:
-            pass
-        photo_name = name + "_" + ip4 + '.jpg'
-        photo_path = photo_dir + '/' + photo_name
-        cmd = 'cp /tmp/photo.jpg ' + photo_path
-        pid = subprocess.call(cmd, shell=True)
-        print "photo copied to " + photo_path
+        except os.error as e:
+            print "Ignoring os.error: ", e
+        path = photo_path(photo_dir, name, ip4)
+        print "shooting " + name
+        if config.listener.MOCK_CAMERA:
+            with open(path, 'w') as outfile:
+                outfile.write('mock camera. no image!')
+        else:
+            take_photo(path, config.listener.RASPISTILL_OPTIONS)
