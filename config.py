@@ -1,3 +1,5 @@
+DEBUG = True
+
 MCAST_GRP = '224.1.1.1'
 MCAST_PORT = 5007
 

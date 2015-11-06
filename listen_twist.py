@@ -20,10 +20,11 @@ class Pi3dScanServer(DatagramProtocol):
         print "ID: ", self.ID
 
     def datagramReceived(self, datagram, address):
-        print "Datagram %s received from %s" % (repr(datagram), repr(address))
+        if config.DEBUG:
+            print "Datagram %s received from %s" % (repr(datagram), repr(address))
         if datagram == "rolecall":
             out_address = (address[0], config.sender.PORT_LISTEN)
-            self.transport.write("hi", out_address)
+            self.transport.write(self.ID, out_address)
 
     def setID(self):
         addr = get_ip_address(config.listener.NET_INTERFACE)
