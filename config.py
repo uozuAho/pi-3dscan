@@ -28,11 +28,8 @@ class ListenerConfig:
 class SenderConfig:
     def __init__(self):
         # Collect photos from all pis and put in a central location
-        self.COLLECT_PHOTOS = False
+        self.COLLECT_PHOTOS = True
         self.PHOTOS_DIR = '/tmp/3dscan'
-        self.IP_BASE_ADDR = '192.168.1.'
-        self.IP_RANGE_START = 11
-        self.IP_RANGE_END = 11
         # Listen on a different port to MCAST - allows
         # testing of sender & listener on the same machine
         self.PORT_LISTEN = 5008

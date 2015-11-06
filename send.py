@@ -3,6 +3,10 @@
 Central command script. Tells all pis to take a photo.
 """
 
+import os
+import subprocess
+import time
+
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 
@@ -28,6 +32,13 @@ def send_command():
     reactor.run()
 
 
+def get_pi_ips(path):
+    ips = []
+    with open(config.IP_LIST_FILE) as infile:
+        ips.append(config.IP_BASE_ADDR + infile.readline().strip())
+    return ips
+
+
 def copy_all_photos(remote_path, dest):
     """ Copy photos from each pi to a single location """
     # create dest dir if it doesn't exist
@@ -35,9 +46,10 @@ def copy_all_photos(remote_path, dest):
         os.makedirs(dest)
     except os.error:
         pass
-    for i in range(config.sender.IP_RANGE_START, config.sender.IP_RANGE_END + 1):
-        ip_addr = config.sender.IP_BASE_ADDR + str(i)
-        photo_path = remote_path + '_%d.jpg' % i
+    for ip_addr in get_pi_ips(config.IP_LIST_FILE):
+        id = ip_addr.split('.')[-1]
+        id = int(id)
+        photo_path = remote_path + '_%d.jpg' % id
         cmd = 'scp pi@%s:%s %s' % (ip_addr, photo_path, dest)
         subprocess.call(cmd, shell=True)
 
@@ -45,9 +57,11 @@ def copy_all_photos(remote_path, dest):
 send_command()
 
 if command != 'reboot' and command != 'rolecall':
+    name = command
     if config.sender.COLLECT_PHOTOS:
         local_photos_dir = os.path.join(config.sender.PHOTOS_DIR, name)
         remote_path = os.path.join(config.listener.PHOTOS_DIR, name, name)
-        # wait for pis to take their photos (takes a while)
+        print 'Wait a bit for photo capture to complete...'
         time.sleep(10)
+        print 'Copying photos to', local_photos_dir
         copy_all_photos(remote_path, local_photos_dir)
