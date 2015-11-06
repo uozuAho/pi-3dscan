@@ -1,6 +1,7 @@
 #!/usr/bin/python
-"""
-Central command script. Tells all pis to take a photo.
+""" Find all raspberry pis listening on the network
+    by issuing the 'rolecall' command. Writes all
+    responses to the file specified by config.IP_LIST_FILE.
 """
 
 import time
@@ -17,7 +18,7 @@ ROLECALL_TIMEOUT_S = 2
 responses = []
 
 
-class Pi3dScanClient(DatagramProtocol):
+class RolecallClient(DatagramProtocol):
 
     def startProtocol(self):
         self.transport.write('rolecall', (config.MCAST_GRP, config.MCAST_PORT))
@@ -42,5 +43,5 @@ def end_rolecall():
 lc = task.LoopingCall(end_rolecall)
 lc.start(1)
 
-reactor.listenUDP(config.sender.PORT_LISTEN, Pi3dScanClient())
+reactor.listenUDP(config.sender.PORT_LISTEN, RolecallClient())
 reactor.run()
