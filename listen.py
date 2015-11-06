@@ -7,6 +7,7 @@ import fcntl
 import os
 import socket
 import struct
+import subprocess
 
 from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
@@ -72,6 +73,7 @@ def take_photo(dest):
     else:
         cmd = 'raspistill -o %s %s' % (dest, config.listener.RASPISTILL_OPTIONS)
         pid = subprocess.call(cmd, shell=True)
+    print 'done.'
 
 
 def photo_path(dir, name, suffix):
