@@ -23,6 +23,6 @@ def pi_setup():
 
 
 def deploy():
-    print 'Make sure config.py is correct!'
-    put('config.py', config.listener.DEPLOY_DIR)
+    print 'Make sure config_pi.py is correct!'
+    put('config_pi.py', config.listener.DEPLOY_DIR + '/config.py')
     put('listen.py', config.listener.DEPLOY_DIR)
