@@ -23,7 +23,7 @@ class ListenerConfig:
 class SenderConfig:
     def __init__(self):
         # Collect photos from all pis and put in a central location
-        self.COLLECT_PHOTOS = True
+        self.COLLECT_PHOTOS = False
         self.PHOTOS_DIR = '/tmp/3dscan'
         self.IP_BASE_ADDR = '192.168.1.'
         self.IP_RANGE_START = 11
