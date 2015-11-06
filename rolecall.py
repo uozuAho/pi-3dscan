@@ -34,8 +34,10 @@ time_start = time.time()
 def end_rolecall():
     if (time.time() - time_start) > ROLECALL_TIMEOUT_S:
         reactor.stop()
-        print 'Got responses from:'
-        print responses
+        with open(config.IP_LIST_FILE, 'w') as outfile:
+            for r in responses:
+                outfile.write(str(r) + '\n')
+        print 'Done. Total responses:', len(responses)
 
 lc = task.LoopingCall(end_rolecall)
 lc.start(1)

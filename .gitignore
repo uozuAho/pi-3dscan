@@ -1,2 +1,5 @@
 *.pyc
 *.pyo
+
+# temporary list of connected raspberry pis
+picam_ips.txt
