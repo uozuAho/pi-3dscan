@@ -3,24 +3,29 @@
 Central command script. Tells all pis to take a photo.
 """
 
-import os
-import socket
-import subprocess
-import sys
-import time
+from twisted.internet.protocol import DatagramProtocol
+from twisted.internet import reactor
 
 import config
 
 
-print 'photo name:'
-name = sys.stdin.readline()
-name = name.strip('\n')
+command = raw_input("command/photo name: ")
 
 
-def initiate_shoot():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-    sock.sendto(name, (config.MCAST_GRP, config.MCAST_PORT))
+class CommandClient(DatagramProtocol):
+
+    def startProtocol(self):
+        self.transport.write(command, (config.MCAST_GRP, config.MCAST_PORT))
+
+
+def stop_reactor(s):
+    reactor.stop()
+
+
+def send_command():
+    reactor.listenUDP(config.sender.PORT_LISTEN, CommandClient())
+    reactor.callLater(0.5, stop_reactor, "asdf")
+    reactor.run()
 
 
 def copy_all_photos(remote_path, dest):
@@ -37,12 +42,12 @@ def copy_all_photos(remote_path, dest):
         subprocess.call(cmd, shell=True)
 
 
-# shoot
-initiate_shoot()
+send_command()
 
-if config.sender.COLLECT_PHOTOS:
-    local_photos_dir = os.path.join(config.sender.PHOTOS_DIR, name)
-    remote_path = '/tmp/3dscan/%s/%s' % (name, name)
-    # wait for pis to take their photos (takes a while)
-    time.sleep(10)
-    copy_all_photos(remote_path, local_photos_dir)
+if command != 'reboot' and command != 'rolecall':
+    if config.sender.COLLECT_PHOTOS:
+        local_photos_dir = os.path.join(config.sender.PHOTOS_DIR, name)
+        remote_path = os.path.join(config.listener.PHOTOS_DIR, name, name)
+        # wait for pis to take their photos (takes a while)
+        time.sleep(10)
+        copy_all_photos(remote_path, local_photos_dir)

@@ -3,22 +3,50 @@
 Shoots photos on request.
 """
 
-import socket
-import struct
 import fcntl
 import os
-import subprocess
-import sys
+import socket
+import struct
+
+from twisted.internet.protocol import DatagramProtocol
+from twisted.internet import reactor
 
 import config
 
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-sock.bind(('', config.MCAST_PORT))
-mreq = struct.pack("4sl", socket.inet_aton(config.MCAST_GRP), socket.INADDR_ANY)
+class Pi3dScanServer(DatagramProtocol):
 
-sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+    def startProtocol(self):
+        self.transport.joinGroup(config.MCAST_GRP)
+        self.setID()
+        print "ID: ", self.ID
+        if config.listener.MOCK_CAMERA:
+            print "MOCK_CAMERA is True! Only dummy image files will be generated"
+        else:
+            print "raspistill optons: " + config.listener.RASPISTILL_OPTIONS
+
+    def setID(self):
+        addr = get_ip_address(config.listener.NET_INTERFACE)
+        ip1, ip2, ip3, ip4 = addr.split('.')
+        self.ID = ip4
+
+    def datagramReceived(self, datagram, address):
+        if config.DEBUG:
+            print "Datagram %s received from %s" % (repr(datagram), repr(address))
+        if datagram == "reboot":
+            print "rebooting..."
+            cmd = 'sudo reboot'
+            pid = subprocess.call(cmd, shell=True)
+        elif datagram == "rolecall":
+            out_address = (address[0], config.sender.PORT_LISTEN)
+            self.transport.write(self.ID, out_address)
+        else:
+            name = datagram
+            photo_dir = config.listener.PHOTOS_DIR + '/' + name
+            makedirs(photo_dir)
+            path = photo_path(photo_dir, name, self.ID)
+            take_photo(path)
+
 
 def get_ip_address(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -28,19 +56,23 @@ def get_ip_address(ifname):
             struct.pack('256s', ifname[:15])
         )[20:24])
 
-id = get_ip_address(config.listener.NET_INTERFACE)
 
-ip1, ip2, ip3, ip4 = id.split('.')
+def makedirs(path):
+    try:
+        os.makedirs(path)
+    except os.error as e:
+        print "Ignoring os.error: ", e
 
-print 'ID: ' + ip4
-if config.listener.MOCK_CAMERA:
-    print "MOCK_CAMERA is True! Only dummy image files will be generated"
-else:
-    print "raspistill optons: " + config.listener.RASPISTILL_OPTIONS
 
-def take_photo(dest, options):
-    cmd = 'raspistill -o %s %s' % (dest, options)
-    pid = subprocess.call(cmd, shell=True)
+def take_photo(dest):
+    print "capturing " + dest
+    if config.listener.MOCK_CAMERA:
+        with open(dest, 'w') as outfile:
+            outfile.write('mock camera. no image!')
+    else:
+        cmd = 'raspistill -o %s %s' % (dest, config.listener.RASPISTILL_OPTIONS)
+        pid = subprocess.call(cmd, shell=True)
+
 
 def photo_path(dir, name, suffix):
     """ Convert a photo name to a path
@@ -49,24 +81,6 @@ def photo_path(dir, name, suffix):
     filename = name + "_" + suffix + '.jpg'
     return os.path.join(dir, filename)
 
-while True:
-    data = sock.recv(10240)
-    data = data.strip()
-    if data == "reboot":
-        print "rebooting..."
-        cmd = 'sudo reboot'
-        pid = subprocess.call(cmd, shell=True)
-    else:
-        name = data
-        photo_dir = config.listener.PHOTOS_DIR + '/' + name
-        try:
-            os.makedirs(photo_dir)
-        except os.error as e:
-            print "Ignoring os.error: ", e
-        path = photo_path(photo_dir, name, ip4)
-        print "shooting " + name
-        if config.listener.MOCK_CAMERA:
-            with open(path, 'w') as outfile:
-                outfile.write('mock camera. no image!')
-        else:
-            take_photo(path, config.listener.RASPISTILL_OPTIONS)
+
+reactor.listenMulticast(config.MCAST_PORT, Pi3dScanServer(), listenMultiple=True)
+reactor.run()
