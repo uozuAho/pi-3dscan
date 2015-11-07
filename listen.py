@@ -41,6 +41,10 @@ class Pi3dScanServer(DatagramProtocol):
         elif datagram == "rolecall":
             out_address = (address[0], config.CONTROLLER_PORT)
             self.transport.write(self.ID, out_address)
+        elif datagram == "poweroff":
+            print "shutting down..."
+            cmd = 'sudo poweroff'
+            pid = subprocess.call(cmd, shell=True)
         else:
             name = datagram
             photo_dir = config.PI_PHOTOS_DIR + '/' + name

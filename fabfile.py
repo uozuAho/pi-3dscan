@@ -54,3 +54,7 @@ def reboot():
     # You can also use send.py and send 'reboot' (no quotes).
     # That should be quicker than using fabric.
     run('sudo reboot')
+
+
+def poweroff():
+    run('sudo poweroff')
