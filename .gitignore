@@ -1,5 +1,8 @@
 *.pyc
 *.pyo
 
+# local configuration
+config.py
+
 # temporary list of connected raspberry pis
 picam_ips.txt
