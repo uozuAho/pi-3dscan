@@ -43,5 +43,5 @@ def end_rolecall():
 lc = task.LoopingCall(end_rolecall)
 lc.start(1)
 
-reactor.listenUDP(config.sender.PORT_LISTEN, RolecallClient())
+reactor.listenUDP(config.CONTROLLER_PORT, RolecallClient())
 reactor.run()

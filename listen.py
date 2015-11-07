@@ -21,13 +21,13 @@ class Pi3dScanServer(DatagramProtocol):
         self.transport.joinGroup(config.MCAST_GRP)
         self.setID()
         print "ID: ", self.ID
-        if config.listener.MOCK_CAMERA:
-            print "MOCK_CAMERA is True! Only dummy image files will be generated"
+        if config.PI_MOCK_CAMERA:
+            print "PI_MOCK_CAMERA is True! Only dummy image files will be generated"
         else:
-            print "raspistill optons: " + config.listener.RASPISTILL_OPTIONS
+            print "raspistill optons: " + config.PI_RASPISTILL_OPTIONS
 
     def setID(self):
-        addr = get_ip_address(config.listener.NET_INTERFACE)
+        addr = get_ip_address(config.PI_NET_INTERFACE)
         ip1, ip2, ip3, ip4 = addr.split('.')
         self.ID = ip4
 
@@ -39,11 +39,11 @@ class Pi3dScanServer(DatagramProtocol):
             cmd = 'sudo reboot'
             pid = subprocess.call(cmd, shell=True)
         elif datagram == "rolecall":
-            out_address = (address[0], config.sender.PORT_LISTEN)
+            out_address = (address[0], config.CONTROLLER_PORT)
             self.transport.write(self.ID, out_address)
         else:
             name = datagram
-            photo_dir = config.listener.PHOTOS_DIR + '/' + name
+            photo_dir = config.PI_PHOTOS_DIR + '/' + name
             makedirs(photo_dir)
             path = photo_path(photo_dir, name, self.ID)
             take_photo(path)
@@ -67,11 +67,11 @@ def makedirs(path):
 
 def take_photo(dest):
     print "capturing " + dest
-    if config.listener.MOCK_CAMERA:
+    if config.PI_MOCK_CAMERA:
         with open(dest, 'w') as outfile:
             outfile.write('mock camera. no image!')
     else:
-        cmd = 'raspistill -o %s %s' % (dest, config.listener.RASPISTILL_OPTIONS)
+        cmd = 'raspistill -o %s %s' % (dest, config.PI_RASPISTILL_OPTIONS)
         pid = subprocess.call(cmd, shell=True)
     print 'done.'
 

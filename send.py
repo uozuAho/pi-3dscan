@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-Central command script. Tells all pis to take a photo.
+Central command script. Tells all pis to take a photo or reboot.
 """
 
 import os
@@ -27,7 +27,9 @@ def stop_reactor(s):
 
 
 def send_command():
-    reactor.listenUDP(config.sender.PORT_LISTEN, CommandClient())
+    # Send the multicast packet then quit. There's probably simpler
+    # way to do this.
+    reactor.listenUDP(config.CONTROLLER_PORT, CommandClient())
     reactor.callLater(0.5, stop_reactor, "asdf")
     reactor.run()
 
@@ -58,9 +60,9 @@ send_command()
 
 if command != 'reboot' and command != 'rolecall':
     name = command
-    if config.sender.COLLECT_PHOTOS:
-        local_photos_dir = os.path.join(config.sender.PHOTOS_DIR, name)
-        remote_path = os.path.join(config.listener.PHOTOS_DIR, name, name)
+    if config.COLLECT_PHOTOS:
+        local_photos_dir = os.path.join(config.COLLECT_PHOTOS_DIR, name)
+        remote_path = os.path.join(config.PI_PHOTOS_DIR, name, name)
         print 'Wait a bit for photo capture to complete...'
         time.sleep(10)
         print 'Copying photos to', local_photos_dir

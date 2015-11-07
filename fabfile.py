@@ -24,10 +24,10 @@ def pi_setup():
 
 def deploy():
     print 'Make sure config.py is correct!'
-    run('mkdir -p ' + config.listener.DEPLOY_DIR)
-    put('config.py', config.listener.DEPLOY_DIR + '/config.py')
-    put('listen.py', config.listener.DEPLOY_DIR)
-    run('chmod +x %s/listen.py' % config.listener.DEPLOY_DIR)
+    run('mkdir -p ' + config.PI_DEPLOY_DIR)
+    put('config.py', config.PI_DEPLOY_DIR + '/config.py')
+    put('listen.py', config.PI_DEPLOY_DIR)
+    run('chmod +x %s/listen.py' % config.PI_DEPLOY_DIR)
 
 
 def redeploy():
@@ -44,10 +44,10 @@ def kill_listener():
 def start_listener():
     print 'Press CTRL-c once this command starts'
     # TODO: figure out how to return from this. I've tried
-    # run(config.listener.DEPLOY_DIR + '/listen.py &', pty=False),
+    # run(config.PI_DEPLOY_DIR + '/listen.py &', pty=False),
     # which I couldn't even CTRL-c out of (had to kill the listen.py
     # process in another terminal)
-    run(config.listener.DEPLOY_DIR + '/listen.py', pty=False)
+    run(config.PI_DEPLOY_DIR + '/listen.py', pty=False)
 
 
 def reboot():
