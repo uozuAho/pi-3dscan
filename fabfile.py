@@ -46,12 +46,9 @@ def kill_listener():
 
 def start_listener():
     """ Start listeners """
-    print 'Press CTRL-c once this command starts'
-    # TODO: figure out how to return from this. I've tried
-    # run(config.PI_DEPLOY_DIR + '/listen.py &', pty=False),
-    # which I couldn't even CTRL-c out of (had to kill the listen.py
-    # process in another terminal)
-    run(config.PI_DEPLOY_DIR + '/listen.py', pty=False)
+    # All these options make listen.py stay running after fabric leaves
+    run('nohup ' + config.PI_DEPLOY_DIR + '/listen.py >& /dev/null < /dev/null &',
+        pty=False)
 
 
 def reboot():
