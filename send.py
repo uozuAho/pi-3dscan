@@ -37,7 +37,10 @@ def send_command():
 def get_pi_ips(path):
     ips = []
     with open(config.IP_LIST_FILE) as infile:
-        ips.append(config.IP_BASE_ADDR + infile.readline().strip())
+        for line in infile:
+            id = line.strip()
+            if id != '':
+                ips.append(config.IP_BASE_ADDR + id)
     return ips
 
 
